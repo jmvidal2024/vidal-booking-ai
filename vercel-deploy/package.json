@@ -1,0 +1,1 @@
+{"dependencies":{"openai":"^4.52.7","undici":"^8.11.2"},"description":"Vidal Booking AI Agent — serverless deployment for the PayPal AI Hackathon","license":"MIT","name":"vidal-booking-ai","version":"0.1.0"}

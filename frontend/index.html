@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vidal Assistant — Hanoi Vidal Barbería</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-panel: #121212;
+    --bg-bubble-bot: #1c1c1c;
+    --gold: #d4a843;
+    --gold-dim: #a8842f;
+    --gold-soft: rgba(212, 168, 67, 0.12);
+    --text: #f2f2f2;
+    --text-dim: #a8a8a8;
+    --border: #262626;
+    --user-bubble: linear-gradient(135deg, #d4a843, #b8903a);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .chat-app {
+    width: 100%;
+    max-width: 460px;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+  /* Header */
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, #161616, #111);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0cd6e, var(--gold) 60%, var(--gold-dim));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 0 18px rgba(212, 168, 67, 0.35);
+  }
+  .header-text h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .header-text h1 .demo {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-dim);
+    display: block;
+    margin-top: 2px;
+  }
+  .status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #35d07f;
+    box-shadow: 0 0 8px #35d07f;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  /* Messages */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: #2c2c2c; border-radius: 3px; }
+  .msg {
+    display: flex;
+    gap: 8px;
+    max-width: 88%;
+    min-width: 0;
+    animation: fadeUp 0.25s ease-out;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.bot { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0cd6e, var(--gold) 60%, var(--gold-dim));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .bubble {
+    padding: 11px 14px;
+    border-radius: 18px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    max-width: 100%;
+    white-space: pre-wrap;
+  }
+  .msg.bot .bubble {
+    background: var(--bg-bubble-bot);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 6px;
+    color: var(--text);
+  }
+  .msg.user .bubble {
+    background: var(--user-bubble);
+    color: #141414;
+    border-bottom-right-radius: 6px;
+    font-weight: 500;
+  }
+  .bubble a.pay-btn {
+    display: inline-block;
+    margin-top: 10px;
+    background: #003087;
+    color: #fff !important;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(0, 48, 135, 0.45);
+  }
+  .bubble a.pay-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 48, 135, 0.6); }
+  .bubble a.pay-btn:active { transform: translateY(0); }
+  .bubble a.pay-btn .pp { font-style: italic; }
+  /* Typing indicator */
+  .typing .bubble {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 14px 16px;
+  }
+  .typing .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: bounce 1.3s infinite;
+  }
+  .typing .dot:nth-child(2) { animation-delay: 0.15s; }
+  .typing .dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+  /* Error */
+  .error-bar {
+    display: none;
+    background: rgba(200, 40, 40, 0.12);
+    border-top: 1px solid rgba(200, 40, 40, 0.4);
+    color: #f0a0a0;
+    font-size: 13px;
+    padding: 10px 16px;
+    text-align: center;
+  }
+  .error-bar.show { display: block; }
+  /* Quick replies */
+  .quick-replies {
+    display: none;
+    gap: 8px;
+    padding: 10px 14px 2px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .quick-replies.show { display: flex; }
+  .quick-replies::-webkit-scrollbar { display: none; }
+  .qr-chip {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--gold);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+  }
+  .qr-chip:hover { background: var(--gold-soft); }
+  .qr-chip:active { background: var(--gold); color: #141414; transform: scale(0.97); }
+  /* Input */
+  .chat-input {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    background: #101010;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chat-input input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    color: var(--text);
+    font-size: 15px;
+    padding: 12px 18px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .chat-input input:focus { border-color: var(--gold-dim); }
+  .chat-input input::placeholder { color: #666; }
+  .send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #e3b94e, var(--gold) 60%, var(--gold-dim));
+    color: #141414;
+    font-size: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(212, 168, 67, 0.35);
+  }
+  .send-btn:hover:not(:disabled) { transform: scale(1.06); }
+  .send-btn:disabled { opacity: 0.45; cursor: default; }
+  .branding {
+    text-align: center;
+    font-size: 11px;
+    color: #555;
+    padding: 6px 0 8px;
+    background: #0c0c0c;
+    flex-shrink: 0;
+  }
+  .branding b { color: var(--gold-dim); font-weight: 600; }
+  @media (max-width: 480px) {
+    .chat-app { border: none; max-width: 100%; }
+    .msg { max-width: 92%; }
+  }
+</style>
+</head>
+<body>
+<div class="chat-app">
+  <div class="chat-header">
+    <div class="avatar">✂️</div>
+    <div class="header-text">
+      <h1>Vidal Assistant<span class="demo">Hanoi Vidal — Barbería · Demo</span></h1>
+    </div>
+    <div class="status"><span class="status-dot"></span>En línea</div>
+  </div>
+
+  <div class="chat-messages" id="messages"></div>
+
+  <div class="error-bar" id="errorBar"></div>
+
+  <div class="quick-replies" id="quickReplies"></div>
+
+  <div class="chat-input">
+    <input type="text" id="input" placeholder="Escribe tu mensaje…" autocomplete="off" maxlength="500">
+    <button class="send-btn" id="sendBtn" title="Enviar" aria-label="Enviar">➤</button>
+  </div>
+  <div class="branding">Con tecnología de <b>Vidal Booking</b> · Pagos con <b>PayPal</b></div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const API_URL = "http://localhost:3001/api/chat"; // ← Cambia esto a la URL del backend
+
+const WELCOME_MESSAGE =
+  "¡Hola! Soy Vidal Assistant, el asistente de Hanoi Vidal Barbería. 💈\n\n" +
+  "Puedo ayudarte a reservar tu cita: dime qué servicio quieres, qué día prefieres y tu nombre. " +
+  "Al confirmar, te enviaré un enlace seguro de PayPal para el depósito.";
+
+const PAY_BUTTON_LABEL = "💳 Pagar depósito con PayPal";
+/* ========================================== */
+
+// Session única por conversación
+const sessionId = "sess_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+
+const messagesEl = document.getElementById("messages");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const errorBar = document.getElementById("errorBar");
+const qrEl = document.getElementById("quickReplies");
+
+function hideQuickReplies() {
+  qrEl.classList.remove("show");
+  qrEl.innerHTML = "";
+}
+
+function renderQuickReplies(options) {
+  hideQuickReplies();
+  if (!Array.isArray(options) || options.length === 0) return;
+  let added = 0;
+  for (const opt of options.slice(0, 6)) {
+    const label = String((opt && opt.label) || "").trim();
+    const value = String(opt && opt.value != null ? opt.value : label).trim();
+    if (!label) continue;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "qr-chip";
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      if (waiting) return;
+      hideQuickReplies();
+      inputEl.value = value || label;
+      sendMessage();
+    });
+    qrEl.appendChild(btn);
+    added++;
+  }
+  if (added > 0) {
+    qrEl.classList.add("show");
+    scrollToBottom();
+  }
+}
+
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function addMessage(text, who, payUrl) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + who;
+
+  let html = "";
+  if (who === "bot") {
+    html += '<div class="msg-avatar">🤖</div>';
+  }
+  html += '<div class="bubble">' + escapeHtml(text);
+  if (payUrl) {
+    html += '<br><a class="pay-btn" href="' + escapeHtml(payUrl) + '" target="_blank" rel="noopener">' +
+            PAY_BUTTON_LABEL.replace("PayPal", '<span class="pp">PayPal</span>') + "</a>";
+  }
+  html += "</div>";
+
+  wrap.innerHTML = html;
+  messagesEl.appendChild(wrap);
+  scrollToBottom();
+  return wrap;
+}
+
+function showTyping() {
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot typing";
+  wrap.id = "typingRow";
+  wrap.innerHTML = '<div class="msg-avatar">🤖</div><div class="bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  messagesEl.appendChild(wrap);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const t = document.getElementById("typingRow");
+  if (t) t.remove();
+}
+
+function showError(msg) {
+  errorBar.textContent = msg;
+  errorBar.classList.add("show");
+  clearTimeout(showError._t);
+  showError._t = setTimeout(() => errorBar.classList.remove("show"), 6000);
+}
+
+let waiting = false;
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || waiting) return;
+
+  inputEl.value = "";
+  hideQuickReplies();
+  waiting = true;
+  sendBtn.disabled = true;
+  errorBar.classList.remove("show");
+
+  addMessage(text, "user");
+  showTyping();
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, message: text })
+    });
+
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
+    const data = await res.json();
+    hideTyping();
+
+    // El backend puede devolver: { reply, paypal_url } o { message, approval_url }
+    const reply = data.reply || data.message || "No recibí respuesta del asistente.";
+    const payUrl = data.paypal_url || data.approval_url || data.paypalUrl || null;
+
+    addMessage(reply, "bot", payUrl);
+    renderQuickReplies(data.quick_replies);
+
+  } catch (err) {
+    hideTyping();
+    showError("⚠️ No pude conectar con el asistente. Verifica que el backend esté en línea e inténtalo de nuevo.");
+    console.error("Chat error:", err);
+  } finally {
+    waiting = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+sendBtn.addEventListener("click", sendMessage);
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
+// Mensaje de bienvenida
+window.addEventListener("load", () => {
+  setTimeout(() => addMessage(WELCOME_MESSAGE, "bot"), 400);
+  inputEl.focus();
+});
+</script>
+</body>
+</html>
